@@ -22,7 +22,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MainPageTest implements UtilsTest {
     private final MainPage mainPage = new MainPage();
     private static String login;
-    private static String password;
+    private static String passwordTrue;
+    private static String passwordFalse;
 
     @BeforeAll
     public static void getCredentials() throws IOException {
@@ -32,10 +33,11 @@ public class MainPageTest implements UtilsTest {
         var appProps = new Properties();
         appProps.load(new FileInputStream(path));
         login = appProps.getProperty("login");
-        password = appProps.getProperty("passwordTrue");
+        passwordTrue = appProps.getProperty("passwordTrue");
+        passwordFalse = appProps.getProperty("passwordFalse");
     }
 
-    private void login() {
+    private void login(String password) {
         mainPage.login.click();
         WebDriverRunner.getWebDriver().switchTo().frame(WebDriverRunner.getWebDriver().findElement(By.cssSelector("iframe")));
         waitVisibleElement(mainPage.loginText);
@@ -55,11 +57,71 @@ public class MainPageTest implements UtilsTest {
     }
 
     /**
-     * Сценарий 3 - пользователь хочет получить список категорий и выбрать определенную категорию<br>
+     * Сценарий 1 - пользователь хочет авторизоваться с правильными кредами<br>
+     * 1.Пользователь нажимает кнопку войти<br>
+     * 2.Пользователь вводит правильные креды для логина и пароля<br>
+     * 3.Пользователь успешно авторизуется<br>
+     * 4.На главной странице появлятеся кнопка для перехода в профиль
+     *
+     * @param browserName название браузера
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"firefox", "chrome"})
+    public void authorizationTrue(String browserName) throws InterruptedException {
+        setUp(browserName);
+        login(passwordTrue);
+        waitVisibleElement(mainPage.profile);
+        assertTrue(mainPage.profile.exists());
+        timeOut();
+    }
+
+    /**
+     * Сценарий 2 - пользователь хочет авторизоваца с неправильными кредами<br>
+     * 1.Пользователь нажимает кнопку войти<br>
+     * 2.Пользователь вводит неправильные креды для логина и пароля
+     * 3.Пользователь переходит на страницу повторной авторизации с сообщением о невалидности кредов
+     *
+     * @param browserName название браузера
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"firefox", "chrome"})
+    public void authorizationFalse(String browserName) throws InterruptedException {
+        setUp(browserName);
+        login(passwordFalse);
+        waitVisibleElement(mainPage.error);
+        assertEquals("Неверный пароль, попробуйте ещё раз", mainPage.error.getText());
+        timeOut();
+    }
+
+    /**
+     * Сценарий 3 - авторизованный пользователь выйти<br>
+     * 1.Пользователь нажимает на аккордион с почтой<br>
+     * 2.Пользователь ждет подгрузки и в выдвигающемся окне слева нажимает кнопку выйти
+     * 3.Пользователь ждет подгрузки и выходит из профиля
+     * 4.Конпка войти опять доступна
+     *
+     * @param browserName название браузера
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"firefox", "chrome"})
+    public void logout(String browserName) throws InterruptedException {
+        setUp(browserName);
+        login(passwordTrue);
+        waitVisibleElement(mainPage.logoutAcc);
+        mainPage.logoutAcc.click();
+        waitVisibleElement(mainPage.logout);
+        mainPage.logout.click();
+        waitVisibleElement(mainPage.login);
+        assertTrue(mainPage.login.exists());
+        timeOut();
+    }
+
+    /**
+     * Сценарий 4 - пользователь хочет получить список категорий и выбрать определенную категорию<br>
      * 1.Пользователь выбирает в главном меню вкладку категории<br>
      * 2.Пользователь ждет прогрузки и видит список категорий
      * 3.Пользователь выбирает нужную категорию
-     * 4.Пользователь ждет прогрузки и переходит на страницу с выбранной категорией
+     * 4.Пользователь ждет прогрузки и получает все вопросы связанные с выбраной категроией
      *
      * @param browserName название браузера
      */
@@ -67,6 +129,7 @@ public class MainPageTest implements UtilsTest {
     @ValueSource(strings = {"firefox", "chrome"})
     public void checkCategories(String browserName) throws InterruptedException {
         setUp(browserName);
+        login(passwordTrue);
         mainPage.categories.click();
         waitVisibleElement(mainPage.blockCategories);
         waitVisibleElement(mainPage.computerGame);
@@ -78,9 +141,11 @@ public class MainPageTest implements UtilsTest {
     }
 
     /**
-     * Сценарий 4 - пользователь хочет задать вопрос<br>
+     * Сценарий 5 - пользователь хочет задать вопрос (но у него не хватает очков))<br>
      * 1.Пользователь выбирает в главном меню вкладку спросить<br>
      * 2.Пользователь ждет прогрузки и переходит на страницу объявления вопроса
+     * 3.Пользователь задает тему и сам вопрос
+     * 4.Пользователь ждет прогрузки и получает модальное окно с информацией об ограничении
      *
      * @param browserName название браузера
      */
@@ -88,7 +153,7 @@ public class MainPageTest implements UtilsTest {
     @ValueSource(strings = {"firefox", "chrome"})
     public void checkAsk(String browserName) throws InterruptedException {
         setUp(browserName);
-        login();
+        login(passwordTrue);
         mainPage.ask.click();
         waitVisibleElement(mainPage.blockAsk);
         String expectedURL = "https://otvet.mail.ru/ask";
@@ -97,7 +162,7 @@ public class MainPageTest implements UtilsTest {
         mainPage.themeQuestion.setValue("Java плюсы и минусы");
         WebElement webElement = WebDriverRunner.getWebDriver().findElement(By.xpath("//*[@id=\"question_additional\"]/div[2]/div/p"));
         waitVisibleElement(webElement);
-        String script = "arguments[0].innerHTML='Java расскажите про плюсы и минусы'";
+        String script = "arguments[0].innerHTML='Java расскажите про плюсы и минусы (тестирую Selenium можно не отвечать)'";
         ((JavascriptExecutor) WebDriverRunner.getWebDriver()).executeScript(script, webElement);
         waitVisibleElement(mainPage.publishQuestion);
         mainPage.publishQuestion.click();
@@ -111,7 +176,7 @@ public class MainPageTest implements UtilsTest {
     }
 
     /**
-     * Сценарий 5 - пользователь хочет получить информацию о лидерах<br>
+     * Сценарий 6 - пользователь хочет получить информацию о лидерах<br>
      * 1.Пользователь выбирает в главном меню вкладку лидеры<br>
      * 2.Пользователь ждет прогрузки и переходит на страницу информацию о лидерах
      *
@@ -133,7 +198,7 @@ public class MainPageTest implements UtilsTest {
     }
 
     /**
-     * Сценарий 6 - пользователь хочет получить информацию о бизнессе<br>
+     * Сценарий 7 - пользователь хочет получить информацию о бизнессе<br>
      * 1.Пользователь выбирает в главном меню вкладку бизнесс<br>
      * 2.Пользователь ждет прогрузки и переходит на страницу информацию о бизнессе
      *
@@ -155,7 +220,7 @@ public class MainPageTest implements UtilsTest {
     }
 
     /**
-     * Сценарий 7 - пользователь хочет найти вопросы содержащее определенное слово<br>
+     * Сценарий 8 - пользователь хочет найти вопросы содержащее определенное слово<br>
      * 1.Пользователь вбивает слово и жмет найти<br>
      * 2.Пользователь ждет прогрузки и переходит на страницу с вопросами содержащии набранное слово<br>
      * 3.В поле поиска в новом блоке появляется набранное слово

@@ -8,7 +8,7 @@ import static org.awaitility.Awaitility.with;
 public interface UtilsTest {
     default void waitVisibleElement(WebElement we) {
         with().pollInSameThread().pollDelay(100, TimeUnit.MILLISECONDS).await().atMost
-                (10, SECONDS).until(we::isDisplayed);
+                (100, SECONDS).until(we::isDisplayed);
     }
 
     default void timeOut() throws InterruptedException {
