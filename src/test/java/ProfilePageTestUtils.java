@@ -16,7 +16,7 @@ import static com.codeborne.selenide.Selenide.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class ProfilePageTest implements UtilsTest {
+public class ProfilePageTestUtils implements TestUtils {
     private final MainPage mainPage = new MainPage();
     private final ProfilePage profilePage = new ProfilePage();
     private static String login;
@@ -35,6 +35,7 @@ public class ProfilePageTest implements UtilsTest {
 
     private void login() {
         mainPage.login.click();
+        waitVisibleElement(WebDriverRunner.getWebDriver().findElement(By.cssSelector("iframe")));
         WebDriverRunner.getWebDriver().switchTo().frame(WebDriverRunner.getWebDriver().findElement(By.cssSelector("iframe")));
         waitVisibleElement(mainPage.loginText);
         mainPage.loginText.setValue(login);

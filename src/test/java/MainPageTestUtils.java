@@ -1,6 +1,7 @@
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.SelenideElement;
 import com.codeborne.selenide.WebDriverRunner;
+import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -19,7 +20,7 @@ import static com.codeborne.selenide.Selenide.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class MainPageTest implements UtilsTest {
+public class MainPageTestUtils implements TestUtils {
     private final MainPage mainPage = new MainPage();
     private static String login;
     private static String passwordTrue;
@@ -38,7 +39,9 @@ public class MainPageTest implements UtilsTest {
     }
 
     private void login(String password) {
+        waitVisibleElement(mainPage.login);
         mainPage.login.click();
+        waitVisibleElement(WebDriverRunner.getWebDriver().findElement(By.cssSelector("iframe")));
         WebDriverRunner.getWebDriver().switchTo().frame(WebDriverRunner.getWebDriver().findElement(By.cssSelector("iframe")));
         waitVisibleElement(mainPage.loginText);
         mainPage.loginText.setValue(login);
@@ -51,8 +54,9 @@ public class MainPageTest implements UtilsTest {
         WebDriverRunner.getWebDriver().switchTo().parentFrame();
     }
 
-    private void setUp(String browserName) {
+    private void setUp(String browserName) throws InterruptedException {
         Configuration.browser = browserName;
+        timeOut();
         open("https://otvet.mail.ru/");
     }
 
@@ -73,6 +77,7 @@ public class MainPageTest implements UtilsTest {
         waitVisibleElement(mainPage.profile);
         assertTrue(mainPage.profile.exists());
         timeOut();
+
     }
 
     /**

@@ -14,9 +14,7 @@ public class MainPage {
     public SelenideElement profile = $x("/html/body/div[1]/div[4]/div[2]/div[1]/div/div[2]/div/span/span[2]/span[5]/a");
 
     public SelenideElement error =$x("/html/body/div[1]/div[2]/div/div[2]/div/div/div/div/form/div[2]/div/div[2]/div/div/div[2]/small/div");
-
     public SelenideElement logoutAcc = $x("/html/body/div[1]/div[3]/div/div[2]/div/span[2]");
-
     public SelenideElement logout =$x("/html/body/div[1]/div[3]/div/div[3]/div/div/div[2]/div[2]");
 
     public SelenideElement categories = $x("/html/body/div[1]/div[4]/div[2]/div[1]/div/div[2]/div/span/span[1]/span[1]/span[1]/span[4]");
